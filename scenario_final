@@ -1,0 +1,433 @@
+# BRC SCENARIOS
+
+## 1) PROD Node 1 Web Server is down
+
+**Description**
+```
+PROD Node 1 Web Server went down (Node 1 App and DB is up)
+Load Balancer will direct traffic to Node 2
+```
+**Steps During Outage**
+```
+Fix Node 1 Web Server
+```
+**Steps After Outage**
+```
+When Node 1 Web is active NSX LB will automatically route the traffic to both Node 1 and Node 2
+```
+## 2) PROD Node 2 Web Server is down
+**Description**
+```
+PROD Node 2 Web Server went down (Node 1 App and DB is up)
+Load Balancer will direct traffic to Node 1
+```
+**Steps During Outage**
+```
+Fix Node 2 Web Server
+```
+**Steps After Outage**
+```
+When Node 2 Web is active NSX LB will automatically route the traffic to both Node 1 and Node 2
+```
+## 3) PROD Node 1 and 2 Web Server are down
+
+**Description**
+```
+PROD Node 1 and 2 Web Server are down (Node 1 App and DB is up).
+BRC Set will be activated.
+```
+
+**Steps During Outage**
+```
+Stop dataguard on BRC.
+Failover to BRC / Activate BRC database.
+Switch DNS rename Prod IP address to BRC IP Address.
+Start BRC Web and App Server.
+Ensure all API and interface connections are ok, configure as necessary.
+Wait for BCP council's advise before proceeding with transactions.
+```
+
+**Steps After Outage**
+```
+Advise BU to stop all transactions.
+Stop BRC web and App server.
+```
+## 4) PROD Node 1 App Server is down
+**Description**
+```
+PROD Node 1 App Server is down  (Node 1 Web and DB is up).
+Load Balancer will direct traffic to Node 2.
+```
+**Steps During Outage**
+```
+Fix Node 1 Web Server.
+```
+**Steps After Outage**
+```
+When Node 1 App is active NSX LB will automatically route the traffic to both Node 1 and Node 2
+```
+
+## 5) PROD Node 2 App Server is down
+**Description**
+```
+PROD Node 2 App Server is down  (Node 1 Web and DB is up).
+Load Balancer will direct traffic to Node 1.
+```
+
+**Steps During Outage**
+```
+Fix Node 2 Web Server.
+```
+
+**Steps After Outage**
+```
+When Node 2 App is active NSX LB will automatically route the traffic to both Node 1 and Node 2
+```
+## 6) PROD Node 1 and 2 App Server is inaccessible
+
+**Description**
+```
+PROD Node 1 and 2 App Server are down (Node 1 Web and DB is up).
+BRC Set will be activated.
+```
+
+**Steps During Outage**
+```
+Stop dataguard on BRC.
+Failover to BRC / Activate BRC database.
+Switch DNS rename Prod IP address to BRC IP Address.
+Start BRC Web and App Server.
+Ensure all API and interface connections are ok, configure as necessary.
+Wait for BCP council's advise before proceeding with transactions.
+```
+
+**Steps After Outage**
+```
+Advise BU to stop all transactions.
+Stop BRC web and App server.
+```
+## 7) PROD Node 1 DB Server is down
+**Description**
+```
+PROD Node 1 DB Server is down (Node 1 Web and App is up).
+PROD Node 2 DB Server will be activated.
+```
+
+**Steps During Outage**
+```
+Stop dataguard on Node 2 and BRC.
+Failover to Node 2 / Activate Node 2 database
+Stop Prod Web and App server Node 1 and 2
+Configure dataguard on BRC to point to Node 2 as new Primary DB (Rebuild BRC if necessary).
+Configure application connection setting:
+    Server: App
+    A) Path: /opt/jboss-eap-7.2/standalone/configuration/
+    Filename: standalone.xml
+    Parameter: <datasources>
+                <datasource jta="true" jndi-name="java:/funds_std_cloud_ee" 
+                pool-name="funds_std_cloud_ee" enabled="true" 
+                use-java-context="true" use-ccm="true">
+                    <connection-url>/*DB URL*/</connection-url>
+                    <driver>oracle</driver>
+                    <pool>
+                        <min-pool-size>5</min-pool-size>
+                        <max-pool-size>150</max-pool-size>
+                        <prefill>true</prefill>
+                        <use-strict-min>true</use-strict-min>
+                    </pool>
+                    <security>
+                        <user-name>/*DB USERNAME*/</user-name>
+                        <password>/*DB PASSWORD*/</password>
+                    </security>
+    
+    B) Path: /opt/credence/microservices/NRest/iwfnservices/
+    Filename: dbconfig.json
+    Parameter: 
+        "oracledb": [
+            {
+                "alias": "oraclePool",
+                "user": "/*DB USERNAME*/",
+                "password": "/*DB PASSWORD*/",
+                "connectString": "/*DB URL*/",
+                "poolIncrement": 1,
+                "poolMax": 5,
+                "poolMin": 5,
+                "queueMax": 500,
+                "queueTimeout": 0
+            }
+
+Restart App server Node 1 and 2
+```
+
+**Steps After Outage**
+```
+Advise BU to stop all transactions
+Stop Prod Web and App Server Node 1 and 2
+Configure application connection setting:
+    Server: App
+    A) Path: /opt/jboss-eap-7.2/standalone/configuration/
+    Filename: standalone.xml
+    Parameter: <datasources>
+                <datasource jta="true" jndi-name="java:/funds_std_cloud_ee" 
+                pool-name="funds_std_cloud_ee" enabled="true" 
+                use-java-context="true" use-ccm="true">
+                    <connection-url>/*DB URL*/</connection-url>
+                    <driver>oracle</driver>
+                    <pool>
+                        <min-pool-size>5</min-pool-size>
+                        <max-pool-size>150</max-pool-size>
+                        <prefill>true</prefill>
+                        <use-strict-min>true</use-strict-min>
+                    </pool>
+                    <security>
+                        <user-name>/*DB USERNAME*/</user-name>
+                        <password>/*DB PASSWORD*/</password>
+                    </security>
+    
+    B) Path: /opt/credence/microservices/NRest/iwfnservices/
+    Filename: dbconfig.json
+    Parameter: 
+        "oracledb": [
+            {
+                "alias": "oraclePool",
+                "user": "/*DB USERNAME*/",
+                "password": "/*DB PASSWORD*/",
+                "connectString": "/*DB URL*/",
+                "poolIncrement": 1,
+                "poolMax": 5,
+                "poolMin": 5,
+                "queueMax": 500,
+                "queueTimeout": 0
+            }
+Rebuild PROD Node 1 as standby of Node 2
+Activate reverse dataguard from Node 2 DB to Node 1.
+Switch Node 2 database to stand-by mode.
+Configure BRC dataguard to use Node 1 DB.
+Restart App server Node 1 and 2
+```
+## 8) PROD Node 1 and 2 DB Server are down
+
+**Description**
+```
+PROD DB 1 went down.
+BRC DB Server will be activated.
+```
+**Steps During Outage**
+```
+Stop dataguard on Node 1 and BRC.
+Failover to BRC DB / Activate BRC database
+Stop Prod Web and App server Node 1 and 2
+Configure dataguard on Node 1 to point to BRC as new Primary DB (Rebuild Node 1 and Node 2 if necessary).
+Configure application connection setting:
+    Server: App
+    A) Path: /opt/jboss-eap-7.2/standalone/configuration/
+    Filename: standalone.xml
+    Parameter: <datasources>
+                <datasource jta="true" jndi-name="java:/funds_std_cloud_ee" 
+                pool-name="funds_std_cloud_ee" enabled="true" 
+                use-java-context="true" use-ccm="true">
+                    <connection-url>/*DB URL*/</connection-url>
+                    <driver>oracle</driver>
+                    <pool>
+                        <min-pool-size>5</min-pool-size>
+                        <max-pool-size>150</max-pool-size>
+                        <prefill>true</prefill>
+                        <use-strict-min>true</use-strict-min>
+                    </pool>
+                    <security>
+                        <user-name>/*DB USERNAME*/</user-name>
+                        <password>/*DB PASSWORD*/</password>
+                    </security>
+    
+    B) Path: /opt/credence/microservices/NRest/iwfnservices/
+    Filename: dbconfig.json
+    Parameter: 
+        "oracledb": [
+            {
+                "alias": "oraclePool",
+                "user": "/*DB USERNAME*/",
+                "password": "/*DB PASSWORD*/",
+                "connectString": "/*DB URL*/",
+                "poolIncrement": 1,
+                "poolMax": 5,
+                "poolMin": 5,
+                "queueMax": 500,
+                "queueTimeout": 0
+            }
+Restart App server Node 1 and 2
+```
+**Steps After Outage**
+```
+Advise BU to stop all transactions
+Stop Prod Web and App Server Node 1 and 2
+Configure application connection setting:
+    Server: App
+    A) Path: /opt/jboss-eap-7.2/standalone/configuration/
+    Filename: standalone.xml
+    Parameter: <datasources>
+                <datasource jta="true" jndi-name="java:/funds_std_cloud_ee"
+                pool-name="funds_std_cloud_ee" enabled="true" 
+                use-java-context="true" use-ccm="true">
+                    <connection-url>/*DB URL*/</connection-url>
+                    <driver>oracle</driver>
+                    <pool>
+                        <min-pool-size>5</min-pool-size>
+                        <max-pool-size>150</max-pool-size>
+                        <prefill>true</prefill>
+                        <use-strict-min>true</use-strict-min>
+                    </pool>
+                    <security>
+                        <user-name>/*DB USERNAME*/</user-name>
+                        <password>/*DB PASSWORD*/</password>
+                    </security>
+    
+    B) Path: /opt/credence/microservices/NRest/iwfnservices/
+    Filename: dbconfig.json
+    Parameter: 
+        "oracledb": [
+            {
+                "alias": "oraclePool",
+                "user": "/*DB USERNAME*/",
+                "password": "/*DB PASSWORD*/",
+                "connectString": "/*DB URL*/",
+                "poolIncrement": 1,
+                "poolMax": 5,
+                "poolMin": 5,
+                "queueMax": 500,
+                "queueTimeout": 0
+            }
+Rebuild PROD Node 1 as standby of Node 2
+Activate reverse dataguard from Node 2 DB to Node 1.
+Switch Node 2 database to stand-by mode.
+Configure BRC dataguard to use Node 1 DB.
+Restart App server Node 1 and 2
+```
+
+## 9) All PROD Node 1 set is down
+
+**Description**
+```
+All PROD Node 1 set (Web, App, DB) is down
+PROD Node 2 set (Web, App, DB) will be activated
+```
+**Steps During Outage**
+```
+Stop dataguard on Node 2 and BRC.
+Failover to Node 2 / Activate Node 2 database
+Stop Prod Web and App server Node 1 and 2
+Configure dataguard on BRC to point to Node 2 as new Primary DB (Rebuild BRC if necessary).
+Configure application connection setting:
+    Server: App
+    A) Path: /opt/jboss-eap-7.2/standalone/configuration/
+    Filename: standalone.xml
+    Parameter: <datasources>
+                <datasource jta="true" jndi-name="java:/funds_std_cloud_ee" 
+                pool-name="funds_std_cloud_ee" enabled="true" 
+                use-java-context="true" 
+                use-ccm="true">
+                    <connection-url>/*DB URL*/</connection-url>
+                    <driver>oracle</driver>
+                    <pool>
+                        <min-pool-size>5</min-pool-size>
+                        <max-pool-size>150</max-pool-size>
+                        <prefill>true</prefill>
+                        <use-strict-min>true</use-strict-min>
+                    </pool>
+                    <security>
+                        <user-name>/*DB USERNAME*/</user-name>
+                        <password>/*DB PASSWORD*/</password>
+                    </security>
+    
+    B) Path: /opt/credence/microservices/NRest/iwfnservices/
+    Filename: dbconfig.json
+    Parameter: 
+        "oracledb": [
+            {
+                "alias": "oraclePool",
+                "user": "/*DB USERNAME*/",
+                "password": "/*DB PASSWORD*/",
+                "connectString": "/*DB URL*/",
+                "poolIncrement": 1,
+                "poolMax": 5,
+                "poolMin": 5,
+                "queueMax": 500,
+                "queueTimeout": 0
+            }
+Restart App server Node 1 and 2
+```
+**Steps After Outage**
+```
+When Node 1 App is active NSX LB will automatically route the traffic to both Node 1 and Node 2.
+Rebuild Node 1 DB
+``` 
+
+## 10) All PROD Node 2 set is down
+
+**Description**
+```
+All PROD Node 1 set (Web, App, DB) is down
+PROD Node 2 set (Web, App, DB) will be activated
+Load Balancer will direct traffic to Node 1.
+```
+**Steps During Outage**
+```
+Fix Node 2 Set
+```
+**Steps After Outage**
+```
+Rebuild Node 2 DB
+```
+
+## 11) Total Disaster
+
+**Description**
+```
+All Node 1 Node 2 sets are down
+Activate BRC(App,Web,DB) servers
+```
+**Steps During Outage**
+```
+Stop dataguard on BRC.
+Failover to BRC / Activate BRC database.
+Switch DNS rename Prod IP address to BRC IP Address.
+Start BRC Web and App Server.
+Ensure all API and interface connections are ok, configure as necessary.
+Wait for BCP council's advise before proceeding with transactions.
+```
+**Steps After Outage**
+```
+Advise BU to stop all transactions.
+Stop BRC web and App server.
+```
+
+## 12) Interface system/s is/are down
+
+**Description**
+```
+Interface systems are down all servers are running
+```
+**Steps During Outage**
+```
+1. Casa interface: Update the static table, static value to reflect the URL of
+BRC CASA interface. 
+Administration-> paramdata entry-> Static table
+module name -> WEBSERVICE.CASA 
+code : Credit_ServiceURL, Debit_ServiceURL, CASAAccountStatusURL
+
+ 2. RM Interface: Update the static table static value to reflect the URL of BRC RM interface. 
+Administration-> paramdata entry-> Static table
+module name -> WEBSERVICE.RM
+code : EndpointRMNo,EndpointAcNumber,EndpointCName
+
+3. SMS Interface: Update the parameter values.
+Administration-> paramdata entry -> parameter -> group name -> SMS. 
+Update all the script parameter value
+
+4. Email Interface:Update the parameter values.
+Administration-> paramdata entry -> parameter -> group name -> email. 
+Update all the script parameter value
+```
+**Steps After Outage**
+```
+After the interface is up,switch back the parameters/paramdata entries to reflect the production interface.
+```
